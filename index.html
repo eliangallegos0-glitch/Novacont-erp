@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaCont ERP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <header class="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400">NovaCont ERP</h1>
+        <p id="empresa-info" class="text-sm text-slate-400">Conectando a Supabase...</p>
+      </div>
+      <span class="px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+        PostgreSQL Conectado
+      </span>
+    </header>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <h2 class="text-lg font-semibold mb-3">Plan de Cuentas (NIIF)</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-slate-800 text-slate-400">
+            <tr>
+              <th class="py-2 pr-4">Código</th>
+              <th class="py-2 pr-4">Cuenta</th>
+              <th class="py-2 pr-4">Tipo</th>
+              <th class="py-2">Detalle</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-cuentas" class="divide-y divide-slate-800/60">
+            <tr><td colspan="4" class="py-4 text-slate-400">Cargando cuentas...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
