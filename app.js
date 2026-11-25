@@ -89,3 +89,214 @@ formCuenta.addEventListener("submit", async (e) => {
     formCuenta.reset();
     cargarDatos();
   });
+let cuentasDisponibles = [];
+let lineasBorrador = [];
+
+const fechaInput = document.getElementById("asiento-fecha");
+if (fechaInput && !fechaInput.value) {
+  fechaInput.value = new Date().toISOString().split("T")[0];
+}
+
+async function cargarCuentasParaAsiento() {
+  const { data, error } = await supabase
+    .from("plan_cuentas")
+    .select("id, codigo, nombre, tipo, naturaleza, es_detalle")
+    .order("codigo", { ascending: true });
+
+  if (error || !data) return;
+  cuentasDisponibles = data;
+
+  const selectCuenta = document.getElementById("linea-cuenta");
+  if (!selectCuenta) return;
+
+  const cuentasDetalle = data.filter((c) => c.es_detalle !== false);
+  const lista = cuentasDetalle.length > 0 ? cuentasDetalle : data;
+
+  selectCuenta.innerHTML = lista
+    .map((c) => `<option value="${c.id}">${c.codigo} - ${c.nombre}</option>`)
+    .join("");
+}
+
+function renderBorradorAsiento() {
+  const tbody = document.getElementById("tabla-borrador-asiento");
+  const totalDebeEl = document.getElementById("total-debe");
+  const totalHaberEl = document.getElementById("total-haber");
+  const estadoCuadreEl = document.getElementById("estado-cuadre");
+
+  if (!tbody) return;
+
+  if (lineasBorrador.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="py-3 text-slate-500 text-center">Agrega al menos 2 líneas con Debe = Haber</td></tr>`;
+  } else {
+    tbody.innerHTML = lineasBorrador
+      .map(
+        (l, idx) => `
+      <tr>
+        <td class="py-2 pr-3">${l.textoCuenta}</td>
+        <td class="py-2 px-3 text-right text-emerald-400">$${l.debe.toFixed(2)}</td>
+        <td class="py-2 px-3 text-right text-sky-400">$${l.haber.toFixed(2)}</td>
+        <td class="py-2 pl-3 text-right">
+          <button type="button" onclick="eliminarLinea(${idx})" class="text-rose-400 hover:text-rose-300 text-xs">Quitar</button>
+        </td>
+      </tr>`
+      )
+      .join("");
+  }
+
+  const totalDebe = lineasBorrador.reduce((acc, l) => acc + l.debe, 0);
+  const totalHaber = lineasBorrador.reduce((acc, l) => acc + l.haber, 0);
+  const cuadra = lineasBorrador.length >= 2 && Math.abs(totalDebe - totalHaber) < 0.005 && totalDebe > 0;
+
+  if (totalDebeEl) totalDebeEl.textContent = `$${totalDebe.toFixed(2)}`;
+  if (totalHaberEl) totalHaberEl.textContent = `$${totalHaber.toFixed(2)}`;
+
+  if (estadoCuadreEl) {
+    if (cuadra) {
+      estadoCuadreEl.textContent = "Cuadrado (OK)";
+      estadoCuadreEl.className = "text-xs px-2 py-1 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30";
+    } else {
+      estadoCuadreEl.textContent = "Sin cuadrar";
+      estadoCuadreEl.className = "text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30";
+    }
+  }
+}
+
+window.eliminarLinea = function (index) {
+  lineasBorrador.splice(index, 1);
+  renderBorradorAsiento();
+};
+
+document.getElementById("btn-agregar-linea")?.addEventListener("click", () => {
+  const selectCuenta = document.getElementById("linea-cuenta");
+  const debe = parseFloat(document.getElementById("linea-debe").value) || 0;
+  const haber = parseFloat(document.getElementById("linea-haber").value) || 0;
+
+  if (debe <= 0 && haber <= 0) {
+    alert("Ingresa un monto mayor a 0 en Debe o en Haber.");
+    return;
+  }
+  if (debe > 0 && haber > 0) {
+    alert("En una misma línea pon monto solo en Debe o solo en Haber.");
+    return;
+  }
+
+  lineasBorrador.push({
+    cuenta_id: selectCuenta.value,
+    textoCuenta: selectCuenta.options[selectCuenta.selectedIndex].text,
+    debe: Number(debe.toFixed(2)),
+    haber: Number(haber.toFixed(2))
+  });
+
+  document.getElementById("linea-debe").value = "0.00";
+  document.getElementById("linea-haber").value = "0.00";
+  renderBorradorAsiento();
+});
+
+document.getElementById("form-asiento")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const totalDebe = lineasBorrador.reduce((acc, l) => acc + l.debe, 0);
+  const totalHaber = lineasBorrador.reduce((acc, l) => acc + l.haber, 0);
+
+  if (lineasBorrador.length < 2 || Math.abs(totalDebe - totalHaber) >= 0.005 || totalDebe <= 0) {
+    alert("El asiento debe tener al menos 2 líneas y el total del Debe debe ser igual al Haber.");
+    return;
+  }
+
+  const { data: empresa, error: errEmpresa } = await supabase
+    .from("empresas")
+    .select("id")
+    .limit(1)
+    .single();
+
+  if (errEmpresa || !empresa) {
+    alert("No se encontró una empresa registrada.");
+    return;
+  }
+
+  const { data: asientoCreado, error: errAsiento } = await supabase
+    .from("asientos")
+    .insert([
+      {
+        empresa_id: empresa.id,
+        fecha: document.getElementById("asiento-fecha").value,
+        glosa: document.getElementById("asiento-glosa").value.trim()
+      }
+    ])
+    .select("id")
+    .single();
+
+  if (errAsiento || !asientoCreado) {
+    alert("Error al crear asiento: " + (errAsiento?.message || ""));
+    return;
+  }
+
+  const detalles = lineasBorrador.map((l) => ({
+    asiento_id: asientoCreado.id,
+    cuenta_id: l.cuenta_id,
+    debe: l.debe,
+    haber: l.haber
+  }));
+
+  const { error: errDetalle } = await supabase.from("detalle_asientos").insert(detalles);
+
+  if (errDetalle) {
+    alert("Error al guardar detalles: " + errDetalle.message);
+    return;
+  }
+
+  lineasBorrador = [];
+  document.getElementById("asiento-glosa").value = "";
+  renderBorradorAsiento();
+  await cargarBalanceComprobacion();
+  alert("Asiento guardado y saldos actualizados.");
+});
+
+async function cargarBalanceComprobacion() {
+  const tbody = document.getElementById("tabla-balance");
+  if (!tbody) return;
+
+  const { data: cuentas } = await supabase
+    .from("plan_cuentas")
+    .select("id, codigo, nombre, tipo, naturaleza")
+    .order("codigo", { ascending: true });
+
+  const { data: movimientos } = await supabase
+    .from("detalle_asientos")
+    .select("cuenta_id, debe, haber");
+
+  if (!cuentas) return;
+
+  const acumulados = {};
+  (movimientos || []).forEach((m) => {
+    if (!acumulados[m.cuenta_id]) {
+      acumulados[m.cuenta_id] = { debe: 0, haber: 0 };
+    }
+    acumulados[m.cuenta_id].debe += Number(m.debe) || 0;
+    acumulados[m.cuenta_id].haber += Number(m.haber) || 0;
+  });
+
+  tbody.innerHTML = cuentas
+    .map((c) => {
+      const sumDebe = acumulados[c.id]?.debe || 0;
+      const sumHaber = acumulados[c.id]?.haber || 0;
+      const esDeudora = ["ACTIVO", "COSTO", "GASTO"].includes((c.tipo || "").toUpperCase()) ||
+        (c.naturaleza || "").toUpperCase().includes("DEUDOR");
+
+      const saldo = esDeudora ? sumDebe - sumHaber : sumHaber - sumDebe;
+
+      return `
+      <tr>
+        <td class="py-2 pr-4 font-mono text-xs">${c.codigo}</td>
+        <td class="py-2 pr-4">${c.nombre}</td>
+        <td class="py-2 px-3 text-right text-emerald-400">$${sumDebe.toFixed(2)}</td>
+        <td class="py-2 px-3 text-right text-sky-400">$${sumHaber.toFixed(2)}</td>
+        <td class="py-2 pl-3 text-right font-semibold">$${saldo.toFixed(2)}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+cargarCuentasParaAsiento();
+renderBorradorAsiento();
+cargarBalanceComprobacion();
