@@ -8,6 +8,98 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-6">
   <div class="max-w-4xl mx-auto space-y-6">
+    <!-- LIBRO DIARIO: REGISTRO DE ASIENTOS -->
+<section class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+  <h2 class="text-lg font-semibold">Libro Diario (Nuevo Asiento)</h2>
+
+  <form id="form-asiento" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Fecha</label>
+        <input id="asiento-fecha" type="date" required class="w-full bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-400 mb-1">Glosa / Descripción</label>
+        <input id="asiento-glosa" type="text" placeholder="Ej: Aporte inicial de capital en efectivo" required class="w-full bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-400 mb-1">Cuenta Contable</label>
+        <select id="linea-cuenta" class="w-full bg-slate-800 text-white px-3 py-2 rounded border border-slate-700"></select>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Debe ($)</label>
+        <input id="linea-debe" type="number" step="0.01" min="0" value="0.00" class="w-full bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Haber ($)</label>
+        <input id="linea-haber" type="number" step="0.01" min="0" value="0.00" class="w-full bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <button type="button" id="btn-agregar-linea" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm px-3 py-2 rounded border border-slate-700">
+        + Agregar Línea al Asiento
+      </button>
+      <div class="text-sm text-slate-300 space-x-4">
+        <span>Debe: <strong id="total-debe" class="text-emerald-400">$0.00</strong></span>
+        <span>Haber: <strong id="total-haber" class="text-sky-400">$0.00</strong></span>
+        <span id="estado-cuadre" class="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+          Sin cuadrar
+        </span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-slate-800 text-slate-400">
+          <tr>
+            <th class="py-2 pr-3">Cuenta</th>
+            <th class="py-2 px-3 text-right">Debe</th>
+            <th class="py-2 px-3 text-right">Haber</th>
+            <th class="py-2 pl-3 text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-borrador-asiento" class="divide-y divide-slate-800/60">
+          <tr>
+            <td colspan="4" class="py-3 text-slate-500 text-center">Agrega al menos 2 líneas con Debe = Haber</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-5 py-2 rounded">
+        Guardar Asiento Contable
+      </button>
+    </div>
+  </form>
+</section>
+
+<!-- RESULTADOS: BALANCE DE COMPROBACIÓN -->
+<section class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+  <h2 class="text-lg font-semibold mb-3">Balance de Comprobación (Resultados en Tiempo Real)</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-slate-800 text-slate-400">
+        <tr>
+          <th class="py-2 pr-4">Código</th>
+          <th class="py-2 pr-4">Cuenta</th>
+          <th class="py-2 px-3 text-right">Sumas Debe</th>
+          <th class="py-2 px-3 text-right">Sumas Haber</th>
+          <th class="py-2 pl-3 text-right">Saldo Actual</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-balance" class="divide-y divide-slate-800/60">
+        <tr>
+          <td colspan="5" class="py-4 text-slate-400">Calculando saldos...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
     <header class="flex items-center justify-between border-b border-slate-800 pb-4">
       <div>
         <h1 class="text-2xl font-bold text-emerald-400">NovaCont ERP</h1>
