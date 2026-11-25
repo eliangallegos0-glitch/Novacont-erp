@@ -48,3 +48,25 @@ async function cargarDatos() {
 }
 
 cargarDatos();
+const formCuenta = document.getElementById("form-cuenta");
+
+formCuenta.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nuevaCuenta = {
+    codigo: document.getElementById("codigo").value.trim(),
+    nombre: document.getElementById("nombre").value.trim(),
+    tipo: document.getElementById("tipo").value,
+    es_detalle: document.getElementById("es_detalle").value === "true"
+  };
+
+  const { error } = await supabase.from("plan_cuentas").insert([nuevaCuenta]);
+
+  if (error) {
+    alert("Error al guardar: " + error.message);
+    return;
+  }
+
+  formCuenta.reset();
+  cargarDatos();
+});

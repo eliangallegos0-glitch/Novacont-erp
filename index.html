@@ -20,6 +20,25 @@
 
     <section class="bg-slate-900 border border-slate-800 rounded-xl p-5">
       <h2 class="text-lg font-semibold mb-3">Plan de Cuentas (NIIF)</h2>
+<form id="form-cuenta" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6 bg-slate-900 p-4 rounded-lg border border-slate-800">
+  <input id="codigo" type="text" placeholder="Código (ej: 1.01.05)" required class="bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+  <input id="nombre" type="text" placeholder="Nombre de la cuenta" required class="bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+  <select id="tipo" class="bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+    <option value="ACTIVO">ACTIVO</option>
+    <option value="PASIVO">PASIVO</option>
+    <option value="PATRIMONIO">PATRIMONIO</option>
+    <option value="INGRESO">INGRESO</option>
+    <option value="COSTO">COSTO</option>
+    <option value="GASTO">GASTO</option>
+  </select>
+  <select id="es_detalle" class="bg-slate-800 text-white px-3 py-2 rounded border border-slate-700">
+    <option value="true">Detalle: Sí</option>
+    <option value="false">Detalle: Grupo</option>
+  </select>
+  <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded">
+    Agregar Cuenta
+  </button>
+</form>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead class="border-b border-slate-800 text-slate-400">
