@@ -48,25 +48,38 @@ async function cargarDatos() {
 }
 
 cargarDatos();
-const formCuenta = document.getElementById("form-cuenta");
+cargarDatos();
+  const formCuenta = document.getElementById("form-cuenta");
 
-formCuenta.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  formCuenta.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const nuevaCuenta = {
-    codigo: document.getElementById("codigo").value.trim(),
-    nombre: document.getElementById("nombre").value.trim(),
-    tipo: document.getElementById("tipo").value,
-    es_detalle: document.getElementById("es_detalle").value === "true"
-  };
+    const { data: empresa, error: errEmpresa } = await supabase
+      .from("empresas")
+      .select("id")
+      .limit(1)
+      .single();
 
-  const { error } = await supabase.from("plan_cuentas").insert([nuevaCuenta]);
+    if (errEmpresa || !empresa) {
+      alert("No se encontró una empresa registrada: " + (errEmpresa?.message || ""));
+      return;
+    }
 
-  if (error) {
-    alert("Error al guardar: " + error.message);
-    return;
-  }
+    const nuevaCuenta = {
+      empresa_id: empresa.id,
+      codigo: document.getElementById("codigo").value.trim(),
+      nombre: document.getElementById("nombre").value.trim(),
+      tipo: document.getElementById("tipo").value,
+      es_detalle: document.getElementById("es_detalle").value === "true"
+    };
 
-  formCuenta.reset();
-  cargarDatos();
-});
+    const { error } = await supabase.from("plan_cuentas").insert([nuevaCuenta]);
+
+    if (error) {
+      alert("Error al guardar: " + error.message);
+      return;
+    }
+
+    formCuenta.reset();
+    cargarDatos();
+  });
