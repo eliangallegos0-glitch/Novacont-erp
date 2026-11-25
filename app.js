@@ -51,7 +51,7 @@ cargarDatos();
 cargarDatos();
   const formCuenta = document.getElementById("form-cuenta");
 
-  formCuenta.addEventListener("submit", async (e) => {
+formCuenta.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const { data: empresa, error: errEmpresa } = await supabase
@@ -65,11 +65,17 @@ cargarDatos();
       return;
     }
 
+    const tipoCuenta = document.getElementById("tipo").value;
+    const naturalezaCuenta = ["ACTIVO", "COSTO", "GASTO"].includes(tipoCuenta)
+      ? "DEUDORA"
+      : "ACREEDORA";
+
     const nuevaCuenta = {
       empresa_id: empresa.id,
       codigo: document.getElementById("codigo").value.trim(),
       nombre: document.getElementById("nombre").value.trim(),
-      tipo: document.getElementById("tipo").value,
+      tipo: tipoCuenta,
+      naturaleza: naturalezaCuenta,
       es_detalle: document.getElementById("es_detalle").value === "true"
     };
 
