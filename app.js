@@ -295,6 +295,59 @@ async function cargarBalanceComprobacion() {
       </tr>`;
     })
     .join("");
+  async function cargarAsientosGuardados() {
+  const tbody = document.getElementById("tabla-asientos-guardados");
+  if (!tbody) return;
+
+  const { data: asientos, error } = await supabase
+    .from("asientos")
+    .select("id, fecha, glosa, detalle_asientos(debe)")
+    .order("creado_en", { ascending: false });
+
+  if (error || !asientos || asientos.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="py-3 text-slate-500">No hay asientos registrados.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = asientos
+    .map((a) => {
+      const total = (a.detalle_asientos || []).reduce((s, d) => s + (Number(d.debe) || 0), 0);
+      return `
+      <tr>
+        <td class="py-2 pr-3 font-mono text-xs">${a.fecha}</td>
+        <td class="py-2 pr-3">${a.glosa}</td>
+        <td class="py-2 px-3 text-right text-emerald-400">$${total.toFixed(2)}</td>
+        <td class="py-2 pl-3 text-right">
+          <button type="button" onclick="deshacerAsiento('${a.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs px-2.5 py-1 rounded">
+            Deshacer
+          </button>
+        </td>
+      </tr>`;
+    })
+    .join("");
+}
+
+window.deshacerAsiento = async function (asientoId) {
+  if (!confirm("¿Deshacer este asiento contable? Se actualizarán los saldos.")) return;
+
+  const { error } = await supabase.from("asientos").delete().eq("id", asientoId);
+  if (error) {
+    alert("Error al deshacer: " + error.message);
+    return;
+  }
+
+  await cargarAsientosGuardados();
+  await cargarBalanceComprobacion();
+};
+
+const formAsientoActual = document.getElementById("form-asiento");
+if (formAsientoActual) {
+  formAsientoActual.addEventListener("submit", () => {
+    setTimeout(cargarAsientosGuardados, 400);
+  });
+}
+
+cargarAsientosGuardados();
 }
 
 cargarCuentasParaAsiento();
